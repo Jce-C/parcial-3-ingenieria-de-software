@@ -52,18 +52,18 @@ Como cliente de EnvíaYa, quiero que la cotización aplique mis descuentos y el 
 
 ### Matriz de trazabilidad
 
-Los identificadores J-CN corresponden a los casos de caja negra vinculados con los criterios de aceptación.
+Los códigos CN identifican los casos de caja negra vinculados con los criterios de aceptación.
 
 | Requisito | Historia | Casos de prueba |
 | --- | --- | --- |
-| R1 · Peso válido | HU-01 | J-CN-01: 50 kg aceptados. J-CN-02: 0 kg rechazados. J-CN-03: 50,01 kg rechazados. |
-| R2 · Zona y día válidos | HU-01 | J-CN-04: zona «costera» rechazada. J-CN-05: día 0 rechazado. |
-| R3 · Tarifa por peso | HU-02 | J-CN-06: 3 kg en el primer tramo. J-CN-07: 10 kg en el segundo. J-CN-08: 10,5 kg con cobro proporcional. |
-| R4 · Recargo por zona | HU-02 | J-CN-06: urbana sin recargo. J-CN-07: rural +25 %. J-CN-08: nacional +50 %. |
-| R5 · Fin de semana | HU-03 | J-CN-09: sábado. J-CN-10: domingo. En ambos se suman $2.000 después de los descuentos. |
-| R6 · Descuentos | HU-03 | J-CN-09: VIP y ENVIO10, en ese orden. J-CN-10: cliente frecuente, 5 %. |
-| R7 · Cupón desconocido | HU-03 | J-CN-10: se ignora el cupón desconocido y se devuelve $12.700. |
-| R8 · Mínimo y redondeo | HU-02, HU-03 | J-CN-07: $11.250 suben a $11.300. J-CN-11: $4.590 se ajustan al mínimo de $5.000. |
+| R1 · Peso válido | HU-01 | CN-01: 50 kg aceptados. CN-02: 0 kg rechazados. CN-03: 50,01 kg rechazados. |
+| R2 · Zona y día válidos | HU-01 | CN-04: zona «costera» rechazada. CN-05: día 0 rechazado. |
+| R3 · Tarifa por peso | HU-02 | CN-06: 3 kg en el primer tramo. CN-07: 10 kg en el segundo. CN-08: 10,5 kg con cobro proporcional. |
+| R4 · Recargo por zona | HU-02 | CN-06: urbana sin recargo. CN-07: rural +25 %. CN-08: nacional +50 %. |
+| R5 · Fin de semana | HU-03 | CN-09: sábado. CN-10: domingo. En ambos se suman $2.000 después de los descuentos. |
+| R6 · Descuentos | HU-03 | CN-09: VIP y ENVIO10, en ese orden. CN-10: cliente frecuente, 5 %. |
+| R7 · Cupón desconocido | HU-03 | CN-10: se ignora el cupón desconocido y se devuelve $12.700. |
+| R8 · Mínimo y redondeo | HU-02, HU-03 | CN-07: $11.250 suben a $11.300. CN-11: $4.590 se ajustan al mínimo de $5.000. |
 
 ## Parte 2. Plan de pruebas
 
@@ -102,3 +102,93 @@ Pérdida de la evidencia inicial. Ejecutar y guardar los resultados de la versi�
 **Entrada.** Especificación R1–R8 y parámetros revisados, versión `v1.0.0` identificada, ambiente listo y casos con entradas y resultados esperados definidos para la ejecución.
 
 **Salida.** Casos ejecutados y trazados, defectos reproducibles documentados, y regresión aprobada en la versión corregida. Guardar capturas y registrar el porcentaje de casos aprobados, los defectos por severidad, su densidad y la cobertura de sentencias y de ramas. Comparar ambas coberturas entre versiones.
+
+## Parte 3. Diseño de casos de caja negra
+
+El diseño usa la especificación R1–R8 y reúne 26 casos. Los resultados de la matriz son los valores esperados que se verificarán al ejecutar las pruebas.
+
+### 3.1 Particiones de equivalencia
+
+Una partición agrupa entradas que reciben el mismo tratamiento. La tabla identifica las clases de cada dato de la cotización.
+
+| Entrada | Clases válidas | Clases inválidas o tratamiento especial |
+| --- | --- | --- |
+| Peso (kg) | 0 < p ≤ 3; 3 < p ≤ 10; 10 < p ≤ 50. | p ≤ 0 y p > 50. Se devuelve «peso inválido». |
+| Zona | Urbana, rural y nacional. Cada zona tiene un recargo distinto. | Zona fuera del catálogo. Se devuelve un error de zona. |
+| Cliente | Normal, frecuente y VIP. Cada tipo tiene un descuento propio. | Tipo fuera del catálogo. La especificación no define qué respuesta debe producir. |
+| Día | Enteros del 1 al 5, sábado (6) y domingo (7). | Entero menor que 1 o mayor que 7. Se devuelve un error de día. Los valores no enteros quedan fuera del dominio descrito. |
+| Cupón | Ausente o ENVIO10. | Código desconocido. Se ignora y se calcula como si estuviera ausente. |
+
+### 3.2 Valores límite de peso
+
+Se usa un paso de 0,01 kg para comparar cada límite con sus vecinos. El peso de 3 kg se cobra en el primer tramo. A 10,01 kg la base aumenta \$8, aunque el total urbano siga siendo \$9.000 tras redondear. CN-08 permite observar un incremento proporcional en el resultado final.
+
+| Límite | Por debajo | En el límite | Por encima |
+| --- | --- | --- | --- |
+| 0 kg | −0,01 kg · CN-12 | 0 kg · CN-02 | 0,01 kg · CN-13 |
+| 3 kg (L1) | 2,99 kg · CN-14 | 3 kg · CN-06 | 3,01 kg · CN-15 |
+| 10 kg (L2) | 9,99 kg · CN-16 | 10 kg · CN-26 | 10,01 kg · CN-17 |
+| 50 kg (PMAX) | 49,99 kg · CN-18 | 50 kg · CN-01 | 50,01 kg · CN-03 |
+
+### 3.3 Tabla de decisión
+
+A representa la tarifa base con el recargo de zona aplicado. Cada fila cubre dos situaciones, día hábil y fin de semana. Las multiplicaciones se aplican de izquierda a derecha. Después del importe indicado se aplica el mínimo de \$5.000 y el redondeo a \$100. Un cupón desconocido se trata como ausente.
+
+| Cliente | Cupón | Días 1–5 | Días 6–7 |
+| --- | --- | --- | --- |
+| Normal | Ausente | A | A + \$2.000 |
+| Normal | ENVIO10 | A × 0,90 | A × 0,90 + \$2.000 |
+| Normal | Desconocido | A | A + \$2.000 |
+| Frecuente | Ausente | A × 0,95 | A × 0,95 + \$2.000 |
+| Frecuente | ENVIO10 | A × 0,95 × 0,90 | A × 0,95 × 0,90 + \$2.000 |
+| Frecuente | Desconocido | A × 0,95 | A × 0,95 + \$2.000 |
+| VIP | Ausente | A × 0,85 | A × 0,85 + \$2.000 |
+| VIP | ENVIO10 | A × 0,85 × 0,90 | A × 0,85 × 0,90 + \$2.000 |
+| VIP | Desconocido | A × 0,85 | A × 0,85 + \$2.000 |
+
+### 3.4 Matriz de casos de prueba
+
+Cada fila muestra las entradas en orden de peso, zona, cliente, día y cupón. El resultado esperado se deriva de R1–R8. La columna «Técnica» indica la técnica principal que originó el caso.
+
+| ID | Requisito | Entradas | Resultado esperado | Técnica |
+| --- | --- | --- | --- | --- |
+| CN-01 | R1, R3 | 50 kg · Urbana · Normal · día 3 · sin cupón | \$41.000 | Límite |
+| CN-02 | R1 | 0 kg · Urbana · Normal · día 3 · sin cupón | Error «peso inválido» | Límite |
+| CN-03 | R1 | 50,01 kg · Urbana · Normal · día 3 · sin cupón | Error «peso inválido» | Límite |
+| CN-04 | R2 | 2 kg · «costera» · Normal · día 3 · sin cupón | Error de zona | Partición |
+| CN-05 | R2 | 2 kg · Rural · Normal · día 0 · sin cupón | Error de día | Límite |
+| CN-06 | R3, R4 | 3 kg · Urbana · Normal · día 4 · sin cupón | \$6.000 | Límite |
+| CN-07 | R3, R4, R8 | 10 kg · Rural · Normal · día 4 · sin cupón | \$11.300 | Límite |
+| CN-08 | R3, R4 | 10,5 kg · Nacional · Normal · día 4 · sin cupón | \$14.100 | Partición |
+| CN-09 | R4–R6, R8 | 4 kg · Rural · VIP · día 6 · ENVIO10 | \$10.600 | Decisión |
+| CN-10 | R5–R8 | 4 kg · Rural · Frecuente · día 7 · OTRO | \$12.700 | Decisión |
+| CN-11 | R6, R8 | 2 kg · Urbana · VIP · día 3 · ENVIO10 | \$5.000 | Decisión |
+| CN-12 | R1 | -0,01 kg · Urbana · Normal · día 3 · sin cupón | Error «peso inválido» | Límite |
+| CN-13 | R1, R3 | 0,01 kg · Urbana · Normal · día 3 · sin cupón | \$6.000 | Límite |
+| CN-14 | R3 | 2,99 kg · Urbana · Normal · día 4 · sin cupón | \$6.000 | Límite |
+| CN-15 | R3 | 3,01 kg · Urbana · Normal · día 4 · sin cupón | \$9.000 | Límite |
+| CN-16 | R3 | 9,99 kg · Urbana · Normal · día 4 · sin cupón | \$9.000 | Límite |
+| CN-17 | R3, R8 | 10,01 kg · Urbana · Normal · día 4 · sin cupón | \$9.000 | Límite |
+| CN-18 | R1, R3, R8 | 49,99 kg · Urbana · Normal · día 3 · sin cupón | \$41.000 | Límite |
+| CN-19 | R2, R5 | 4 kg · Urbana · Normal · día 5 · sin cupón | \$9.000 | Límite |
+| CN-20 | R2, R5 | 4 kg · Urbana · Normal · día 6 · sin cupón | \$11.000 | Límite |
+| CN-21 | R6, R8 | 4 kg · Urbana · VIP · día 4 · sin cupón | \$7.700 | Partición |
+| CN-22 | R2 | 4 kg · Urbana · Normal · día 8 · sin cupón | Error de día | Límite |
+| CN-23 | R2, R5 | 4 kg · Urbana · Normal · día 1 · sin cupón | \$9.000 | Límite |
+| CN-24 | R5–R8 | 4 kg · Rural · Frecuente · día 7 · sin cupón | \$12.700 | Decisión |
+| CN-25 | R6 | 4 kg · Urbana · Normal · día 4 · ENVIO10 | \$8.100 | Decisión |
+| CN-26 | R3 | 10 kg · Urbana · Normal · día 4 · sin cupón | \$9.000 | Límite |
+
+### 3.5 Cálculo de resultados esperados
+
+**CN-06.** El peso de 3 kg pertenece al primer tramo. La base es \$6.000. Como la zona es urbana, el cliente es normal y el día es hábil, no se aplican ajustes. El mínimo y el redondeo dejan el total en \$6.000.
+
+**CN-07.** 10 kg pertenece al segundo tramo, con base de \$9.000. Zona rural: \$9.000 × 1,25 = \$11.250. Sin otros ajustes, el importe queda justo a mitad entre \$11.200 y \$11.300. Se redondea hacia arriba a \$11.300.
+
+**CN-08.** El exceso es 10,5 − 10 = 0,5 kg. Base: \$9.000 + 0,5 × \$800 = \$9.400. Zona nacional: \$9.400 × 1,50 = \$14.100. El total queda en \$14.100.
+
+**CN-09.** Base de \$9.000. Zona rural: \$9.000 × 1,25 = \$11.250. VIP: \$11.250 × 0,85 = \$9.562,50. ENVIO10: \$9.562,50 × 0,90 = \$8.606,25. Sábado: \$8.606,25 + \$2.000 = \$10.606,25. Total redondeado: \$10.600.
+
+**CN-10.** Base de \$9.000 y recargo rural de 25 %: \$11.250. Cliente frecuente: \$11.250 × 0,95 = \$10.687,50. El cupón OTRO se ignora. Domingo: \$10.687,50 + \$2.000 = \$12.687,50. Total redondeado: \$12.700.
+
+**CN-11.** Base urbana de \$6.000. VIP: \$6.000 × 0,85 = \$5.100. ENVIO10: \$5.100 × 0,90 = \$4.590. Al aplicar el mínimo se obtienen \$5.000, que ya es múltiplo de \$100.
