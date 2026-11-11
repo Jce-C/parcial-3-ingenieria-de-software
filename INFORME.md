@@ -64,3 +64,41 @@ Los identificadores J-CN corresponden a los casos de caja negra vinculados con l
 | R6 · Descuentos | HU-03 | J-CN-09: VIP y ENVIO10, en ese orden. J-CN-10: cliente frecuente, 5 %. |
 | R7 · Cupón desconocido | HU-03 | J-CN-10: se ignora el cupón desconocido y se devuelve $12.700. |
 | R8 · Mínimo y redondeo | HU-02, HU-03 | J-CN-07: $11.250 suben a $11.300. J-CN-11: $4.590 se ajustan al mínimo de $5.000. |
+
+## Parte 2. Plan de pruebas
+
+### 2.1 Alcance
+
+Verificar el cotizador de EnvíaYa frente a R1–R8: validación del peso, la zona y el día; tarifas por tramo y destino; descuentos, cupón, recargo de fin de semana, mínimo y redondeo. Se evaluará el comportamiento del código heredado `v1.0.0` y se repetirá la suite después de las correcciones.
+
+### 2.2 Niveles de prueba
+
+**Unidad.** Ejecutar `calc` con entradas controladas. Verificar, por ejemplo, que 3 kg permanezcan en el primer tramo y que $11.250 se redondeen a $11.300.
+
+**Integración.** Comprobar la interacción entre tarifa base, recargo rural, descuento VIP, `ENVIO10` y recargo del sábado. Tras la refactorización, verificar que las funciones extraídas mantengan ese orden al trabajar juntas.
+
+**Sistema.** Ejecutar el cotizador completo desde su entrada pública con solicitudes válidas e inválidas. Comprobar el importe final o el error que corresponda a cada solicitud.
+
+**Aceptación.** Ejecutar los criterios de HU-01 a HU-03 y registrar el resultado con su ID de prueba. Incluir un cupón desconocido y verificar que se ignore y se devuelva el total.
+
+### 2.3 Estrategia, ambiente y roles
+
+Diseñar al menos 20 casos de caja negra a partir de particiones, valores límite y una tabla de decisión. Justificar al menos cinco resultados con cálculos manuales. Diseñar los casos de caja blanca a partir del grafo de `calc` y relacionar las pruebas con la matriz de trazabilidad. Automatizar la ejecución, registrar defectos y repetir la suite en la versión corregida.
+
+**Ambiente.** Python 3 en Windows, terminal PowerShell, entorno virtual, pytest, pytest-cov y Git. Registrar la versión de las herramientas y el commit evaluado junto con cada evidencia.
+
+**Roles.** Análisis de pruebas: diseña los casos y calcula los resultados esperados. Ejecución: automatiza, ejecuta y conserva las evidencias. Mantenimiento: corrige los defectos y revisa la regresión.
+
+### 2.4 Riesgos y mitigaciones
+
+Error al clasificar el peso. Probar valores inferiores, iguales y superiores a los límites, con énfasis en 3 kg y 10 kg.
+
+Redondeo anticipado u orden incorrecto de descuentos. Conservar los subtotales del cálculo manual y verificar un empate de $50 y un envío con descuento y recargo de fin de semana.
+
+Pérdida de la evidencia inicial. Ejecutar y guardar los resultados de la versión heredada antes de incorporar las correcciones.
+
+### 2.5 Criterios de entrada y salida
+
+**Entrada.** Especificación R1–R8 y parámetros revisados, versión `v1.0.0` identificada, ambiente listo y casos con entradas y resultados esperados definidos para la ejecución.
+
+**Salida.** Casos ejecutados y trazados, defectos reproducibles documentados, y regresión aprobada en la versión corregida. Guardar capturas y registrar el porcentaje de casos aprobados, los defectos por severidad, su densidad y la cobertura de sentencias y de ramas. Comparar ambas coberturas entre versiones.
