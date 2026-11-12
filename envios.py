@@ -10,6 +10,8 @@ CONFIG = {
 def calc(p, z, c, d, cup=None, flag=False):
     if p <= 0 or p > 50:
         raise ValueError("peso inválido")
+    if d not in range(1, 8):
+        raise ValueError("día inválido")
     if p <= CONFIG["L1"]:
         t = 6000
     elif p <= CONFIG["L2"]:
