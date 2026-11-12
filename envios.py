@@ -26,9 +26,6 @@ def calc(p, z, c, d, cup=None, flag=False):
         t = t + t * CONFIG["RECARGO_NACIONAL"]
     else:
         raise ValueError("zona inválida")
-    # fin de semana
-    if d in (6, 7):
-        t = t + CONFIG["RECARGO_FINDE"]
     if c == "frecuente":
         t = t - t * 0.05
     if c == "vip":
@@ -36,6 +33,9 @@ def calc(p, z, c, d, cup=None, flag=False):
     if cup != None:
         if cup == "ENVIO10":
             t = t - t * 0.10
+    # fin de semana
+    if d in (6, 7):
+        t = t + CONFIG["RECARGO_FINDE"]
     if t < 5000:
         t = 5000
     if flag:
