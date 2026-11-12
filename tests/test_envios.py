@@ -1,5 +1,7 @@
 """Casos de caja negra y blanca sobre los requisitos del cotizador."""
 
+from inspect import signature
+
 import pytest
 
 from envios import calc
@@ -60,10 +62,11 @@ def verificar_cotizacion(entradas, esperado, mensaje, diagnostico, capsys):
             calc(*entradas)
         return
 
-    resultado = calc(*entradas, flag=True) if diagnostico else calc(*entradas)
+    resultado = calc(*entradas)
     assert resultado == esperado
     if diagnostico:
-        assert capsys.readouterr().out.startswith("costo:")
+        assert "flag" not in signature(calc).parameters
+        assert capsys.readouterr().out == ""
 
 
 @pytest.mark.parametrize("entradas, esperado, mensaje, diagnostico", CAJA_NEGRA)

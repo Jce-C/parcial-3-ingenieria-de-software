@@ -332,3 +332,60 @@ Reproducción. Cotizar 4 kg, zona urbana, cliente VIP, día 4 y sin cupón. Espe
 La densidad usa las 37 líneas físicas de envios.py sin comentarios ni líneas en blanco. La cobertura de ramas de la herramienta usa transiciones entre líneas. En el grafo, la condición del peso se separa en dos predicados para analizar el cortocircuito.
 
 El 100 % de cobertura indica que la suite recorrió todo lo que mide la herramienta. Los 16 fallos muestran que recorrer el código y cumplir los requisitos son comprobaciones distintas.
+
+## Parte 6. Mantenimiento y refactorización
+
+### 6.1 Malos olores y deuda técnica
+
+Las líneas corresponden a envios.py en la etiqueta v1.0.0.
+
+| Mal olor | Líneas | Deuda técnica |
+| --- | --- | --- |
+| Método largo | 10–39 | calc mezcla validación, cálculo, descuentos, salida de diagnóstico y redondeo. Una corrección obliga a revisar responsabilidades ajenas. |
+| Números mágicos | 11, 14, 16, 18, 29, 35 y 39 | Los límites, importes y factores incrustados dificultan localizar las reglas y actualizar sus valores de forma coherente. |
+| Nombres crípticos | 10, 14 y 18 | p, z, c, d y t requieren reconstruir el significado a partir del contexto. |
+| Condicional por tipo | 19–24 | Cada destino agrega una rama dentro de calc. Extender el catálogo obliga a modificar el cálculo principal. |
+| Instrucción redundante | 20 | t = t ocupa una rama sin transformar el importe y oculta la intención de la tarifa urbana. |
+| Argumento bandera | 10 y 37–38 | flag mezcla el cálculo con la impresión y amplía la interfaz pública con un efecto de diagnóstico. |
+| Condicional anidado | 32–34 | La validación y el descuento del cupón quedan implícitos en el anidamiento, lo que dificulta localizar la política del cupón. |
+
+### 6.2 Cambios y tipo de mantenimiento
+
+| Cambio | Tipo | Motivo |
+| --- | --- | --- |
+| DEF-01 | Correctivo | Se corrige el texto de la excepción de peso. |
+| DEF-02 y DEF-03 | Correctivo | La zona debe pertenecer al catálogo y el día al rango 1–7. |
+| DEF-04 y DEF-05 | Correctivo | El recargo aplica el sábado y el domingo después de los descuentos. |
+| DEF-06 | Correctivo | Se usa Decimal y redondeo a centenas con ROUND_HALF_UP. |
+| Extraer validación, tarifa, descuentos y total | Perfectivo | Aísla responsabilidades y reduce la complejidad de calc. |
+| Constantes con nombres | Preventivo | Centraliza las reglas de peso, tarifa y redondeo para reducir inconsistencias. |
+| Estrategia de recargo por zona | Preventivo | Permite seleccionar una política de zona sin añadir ramas a calc. |
+| Retiro de flag | Perfectivo | Simplifica la firma y elimina la impresión de diagnóstico del cotizador. |
+
+### 6.3 Patrón Estrategia aplicado a zonas
+
+calc selecciona una EstrategiaZona mediante el catálogo de destinos. SinRecargo conserva el importe urbano y RecargoPorcentual aplica la tasa configurada para rural o nacional. El cotizador usa la misma operación aplicar en los tres destinos.
+
+![Diagrama UML del patrón Estrategia](evidencias/uml-estrategias-zona.png)
+
+*Figura 4. Diagrama UML de las estrategias de recargo por zona.*
+
+### 6.4 Regresión y comparación
+
+La suite corregida aprobó 41 de 41 casos. Se conservaron las entradas, los IDs y los resultados esperados de negocio. CB-15 conserva el importe esperado y comprueba la ausencia del argumento flag y de la impresión. La evidencia del diagnóstico original permanece en la Parte 5.
+
+```text
+41 passed in 0.31s
+```
+
+| Métrica | Código heredado | Código corregido |
+| --- | --- | --- |
+| Casos aprobados | 25 de 41 | 41 de 41 |
+| Casos fallidos | 16 | 0 |
+| Complejidad ciclomática de calc | 15 | 1 |
+| Líneas físicas de envios.py | 39 | 107 |
+| Líneas sin vacías ni comentarios | 37 | 80 |
+| Cobertura de sentencias | 100 % · 29/29 | 100 % · 69/69 |
+| Cobertura de ramas | 100 % · 26/26 | 100 % · 14/14 |
+
+calc coordina las etapas. Al desglosar el cortocircuito, _validar_peso tiene complejidad 4 y _tarifa_base tiene 3. El archivo crece al introducir constantes, funciones y clases. En la versión corregida, Coverage.py excluye cuatro líneas de la declaración del protocolo.
