@@ -1,14 +1,17 @@
 # envios.py
+from decimal import Decimal, ROUND_HALF_UP
+
 CONFIG = {
     "L1": 3,
     "L2": 10,
-    "RECARGO_RURAL": 0.25,
-    "RECARGO_NACIONAL": 0.50,
-    "DESC_VIP": 0.15,
+    "RECARGO_RURAL": Decimal("0.25"),
+    "RECARGO_NACIONAL": Decimal("0.50"),
+    "DESC_VIP": Decimal("0.15"),
     "RECARGO_FINDE": 2000,
 }
 def calc(p, z, c, d, cup=None, flag=False):
-    if p <= 0 or p > 50:
+    p = Decimal(str(p))
+    if not p.is_finite() or p <= 0 or p > 50:
         raise ValueError("peso inválido")
     if d not in range(1, 8):
         raise ValueError("día inválido")
@@ -27,12 +30,12 @@ def calc(p, z, c, d, cup=None, flag=False):
     else:
         raise ValueError("zona inválida")
     if c == "frecuente":
-        t = t - t * 0.05
+        t = t - t * Decimal("0.05")
     if c == "vip":
         t = t - t * CONFIG["DESC_VIP"]
     if cup != None:
         if cup == "ENVIO10":
-            t = t - t * 0.10
+            t = t - t * Decimal("0.10")
     # fin de semana
     if d in (6, 7):
         t = t + CONFIG["RECARGO_FINDE"]
@@ -40,4 +43,4 @@ def calc(p, z, c, d, cup=None, flag=False):
         t = 5000
     if flag:
         print("costo:", t)
-    return int(t / 100) * 100
+    return int(Decimal(t).quantize(Decimal("1E2"), rounding=ROUND_HALF_UP))
