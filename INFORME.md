@@ -259,3 +259,76 @@ En CB-08, la zona desconocida recorre las tres salidas No del bloque de zona. La
 | 23 · Cupón = ENVIO10 | CB-13 | CB-12 |
 | 25 · t < 5.000 | CB-14 | CB-01 |
 | 27 · flag es verdadero | CB-15 | CB-01 |
+
+## Parte 5. Automatización, ejecución y defectos
+
+### 5.1 Suite y ejecución del código heredado
+
+La suite tests/test_envios.py parametriza los casos CN y CB de las partes 3 y 4. Verifica importes, excepciones y la impresión de diagnóstico del caso CB-15. Cada prueba conserva su ID, incluso cuando un caso de caja blanca reutiliza entradas de caja negra. Se ejecutó sobre el archivo envios.py de v1.0.0.
+
+Entorno de ejecución: Python 3.12.14, pytest 9.2.0, pytest-cov 7.1.0 y Coverage.py 7.17.2. Las figuras 2 y 3 son capturas de una repetición en PowerShell con Python 3.14.7. La repetición confirmó los mismos totales y cobertura.
+
+```powershell
+python -m pytest -q --tb=short --cov=envios --cov-branch --cov-report=term-missing --cov-report=json:coverage.json
+```
+
+![Salida real de la ejecución contra v1.0.0](evidencias/ejecucion-pruebas-v1.png)
+
+*Figura 2. Resumen y cobertura de la suite completa en PowerShell.*
+
+![Fallo del caso CN-20 en PowerShell](evidencias/fallo-cn20.png)
+
+*Figura 3. Caso CN-20 ejecutado de forma aislada en PowerShell.*
+
+### 5.2 Registro y reproducción de defectos
+
+Se registró un defecto por causa de incumplimiento. La severidad mide el impacto y la prioridad indica el orden de atención: P1 inmediata, P2 siguiente y P3 posterior. Para reproducir un defecto, ejecutar la cotización indicada en v1.0.0 y comparar el resultado.
+
+| Defecto | Requisito | Severidad / prioridad | Casos de referencia |
+| --- | --- | --- | --- |
+| DEF-01 · Mensaje de peso inválido sin tilde | R1 | Baja / P3 | CN-02 |
+| DEF-02 · La zona desconocida recibe una tarifa | R2 | Alta / P1 | CN-04 |
+| DEF-03 · Días fuera del rango pasan la validación | R2 | Alta / P1 | CN-05, CN-22 |
+| DEF-04 · El sábado queda sin recargo | R5 | Alta / P1 | CN-20 |
+| DEF-05 · El recargo dominical se descuenta | R5 | Media / P2 | CN-24 |
+| DEF-06 · El resultado se trunca al centenar inferior | R8 | Media / P2 | CN-07, CN-21 |
+
+#### DEF-01 · Mensaje de peso inválido sin tilde
+
+Reproducción. Cotizar 0 kg, zona urbana, cliente normal, día 3 y sin cupón. Esperado: ValueError con «peso inválido». Obtenido: ValueError con «peso invalido». Justificación: El rechazo funciona. El texto incumple el mensaje exigido en R1 (línea 12).
+
+#### DEF-02 · La zona desconocida recibe una tarifa
+
+Reproducción. Cotizar 2 kg, zona «costera», cliente normal, día 3 y sin cupón. Esperado: Error de zona. Obtenido: \$6.000. Justificación: El bloque de zonas (líneas 19–24) deja pasar una zona fuera del catálogo y puede producir un cobro inválido.
+
+#### DEF-03 · Días fuera del rango pasan la validación
+
+Reproducción. Cotizar 2 kg, zona rural, cliente normal, día 0 y sin cupón. Esperado: Error de día. Obtenido: \$7.500. Justificación: Se genera un precio con una fecha inválida. La condición de la línea 26 calcula un recargo pero no valida el rango.
+
+#### DEF-04 · El sábado queda sin recargo
+
+Reproducción. Cotizar 4 kg, zona urbana, cliente normal, día 6 y sin cupón. Esperado: \$11.000. Obtenido: \$9.000. Justificación: La condición d > 6 omite el sábado (línea 26). Este caso aísla el recargo porque el cliente es normal y no hay cupón.
+
+#### DEF-05 · El recargo dominical se descuenta
+
+Reproducción. Cotizar 4 kg, zona rural, cliente frecuente, día 7 y sin cupón. Esperado: \$12.700. Obtenido: \$12.500. Justificación: El recargo se suma en las líneas 26–27 antes del descuento. El subtotal heredado es \$12.587,50 y su redondeo correcto daría \$12.600. Así se distingue este defecto del truncamiento.
+
+#### DEF-06 · El resultado se trunca al centenar inferior
+
+Reproducción. Cotizar 4 kg, zona urbana, cliente VIP, día 4 y sin cupón. Esperado: \$7.700. Obtenido: \$7.600. Justificación: El subtotal de \$7.650 debe redondear hacia arriba. La línea 39 descarta los \$50 en vez de aplicar el redondeo.
+
+### 5.3 Métricas de la ejecución inicial
+
+| Métrica | Resultado | Base de cálculo |
+| --- | --- | --- |
+| Casos ejecutados | 41 | 26 de caja negra + 15 de caja blanca |
+| Casos aprobados | 25 (60,98 %) | 25 ÷ 41 × 100 |
+| Casos fallidos | 16 | Resultados que difieren de la especificación |
+| Defectos por severidad | 3 altos, 2 medios, 1 bajo | Conteo de defectos únicos |
+| Densidad de defectos | 16,22 por cada 100 líneas | 6 ÷ 37 × 100 |
+| Cobertura de sentencias | 100 % | 29 de 29 sentencias medidas |
+| Cobertura de ramas | 100 % | 26 de 26 ramas medidas |
+
+La densidad usa las 37 líneas físicas de envios.py sin comentarios ni líneas en blanco. La cobertura de ramas de la herramienta usa transiciones entre líneas. En el grafo, la condición del peso se separa en dos predicados para analizar el cortocircuito.
+
+El 100 % de cobertura indica que la suite recorrió todo lo que mide la herramienta. Los 16 fallos muestran que recorrer el código y cumplir los requisitos son comprobaciones distintas.
