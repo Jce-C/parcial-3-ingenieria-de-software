@@ -4,6 +4,17 @@ Este registro sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) 
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-11
+
+### Added
+
+- Se añadió la zona `insular` (San Andrés) con un recargo del 70 % sobre la tarifa base.
+- Se incorporaron cuatro pruebas de aceptación para tarifa insular, descuentos, fin de semana y rechazo de cupones.
+
+### Changed
+
+- Los envíos insulares devuelven `ValueError` si se proporciona un cupón.
+
 ## [2.0.0] - 2026-11-11
 
 ### Added
@@ -31,6 +42,7 @@ Este registro sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) 
 
 - Implementación heredada del cálculo de envíos, guardada como línea base.
 
-[Unreleased]: https://github.com/Jce-C/parcial-3-ingenieria-de-software/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/Jce-C/parcial-3-ingenieria-de-software/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/Jce-C/parcial-3-ingenieria-de-software/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Jce-C/parcial-3-ingenieria-de-software/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/Jce-C/parcial-3-ingenieria-de-software/tree/v1.0.0

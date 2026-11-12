@@ -402,7 +402,7 @@ La etiqueta v1.0.0 identifica el código heredado en ca3081b. La suite de prueba
 
 Se propone v2.0.0 según el versionado semántico. La firma pública cambia de `calc(p, z, c, d, cup=None, flag=False)` a `calc(p, z, c, d, cup=None)`. Un sexto argumento posicional o el argumento por nombre flag produce TypeError. Para migrar, se elimina ese argumento de las llamadas y se usa el valor devuelto para mostrar el costo cuando corresponda. La regresión de la Parte 6 registró 41 de 41 pruebas aprobadas y 100 % de cobertura de ramas de envios.py.
 
-[CHANGELOG.md](CHANGELOG.md) registra los cambios por versión. [NOTAS_VERSION.md](NOTAS_VERSION.md) contiene el resumen para la publicación y las instrucciones de migración. La etiqueta y el lanzamiento de GitHub están pendientes de publicación.
+[CHANGELOG.md](CHANGELOG.md) registra los cambios por versión. [NOTAS_VERSION.md](NOTAS_VERSION.md) contiene el resumen para la publicación y las instrucciones de migración. La etiqueta v2.0.0 corresponde a la versión corregida previa a la solicitud de cambio.
 
 ### Historial de Git
 
@@ -449,3 +449,26 @@ Salida de `git log --oneline --graph --all` hasta b04830b, con la Parte 6 integr
 * 00d65d9 Documenta los parámetros del parcial
 * ca3081b Registra y guarda la versión del código heredada con la configuración personal de los párametros
 ```
+
+## Parte 8. Solicitud de cambio y análisis de impacto
+
+(4 + 2) mod 3 = 0. Se incorpora San Andrés al catálogo con la clave `insular` y un recargo del 70 % sobre la tarifa base. Si el envío incluye un cupón, `calc` devuelve `ValueError` antes de cotizar.
+
+### Impacto sobre los requisitos
+
+| Requisito | Historia | Casos de prueba | Código afectado |
+| --- | --- | --- | --- |
+| R2 · Catálogo de destinos | HU-01 | SC-01 y SC-02 aceptan insular. CN-04 sigue rechazando costera. | ESTRATEGIAS_ZONA y _seleccionar_zona |
+| R4 · Recargo de zona | HU-02 | SC-01 verifica $6.000 × 1,70 = $10.200. SC-02 parte de $9.000 × 1,70. | RecargoPorcentual y RECARGO_INSULAR |
+| R6 y R7 · Cupones | HU-03 | SC-03 rechaza ENVIO10 y SC-04 rechaza OTRO en insular. CN-10 y CN-25 comprueban las reglas fuera de insular. | Validación en calc antes de _aplicar_descuentos |
+| R5 y R8 · Recargo de fin de semana y redondeo | HU-03 | SC-02 verifica $15.300 × 0,85 + $2.000 = $15.005, redondeados a $15.000. | Integración con las etapas de fin de semana y total |
+
+### Mantenimiento y regresión
+
+Es mantenimiento perfectivo porque amplía la funcionalidad a un nuevo destino. En feat/zona-insular se escribieron primero los cuatro casos de tests/test_zona_insular.py. Antes de implementar el cambio, los cuatro fallaron porque la versión base rechazaba la zona. Tras incorporar la estrategia y la validación de cupón, aprobaron las 45 pruebas de la suite. Coverage.py registró 72 sentencias y 16 ramas cubiertas, sin faltantes.
+
+[Salida de las pruebas antes y después del cambio](evidencias/verificacion-zona-insular.txt)
+
+### Nueva versión
+
+Se asigna v2.1.0 a la ampliación. `calc(p, z, c, d, cup=None)` conserva su firma y las reglas de las zonas existentes. El cambio agrega un valor válido de zona y una regla propia de ese destino. La rama del cambio es `feat/zona-insular`. Los cambios por versión se registran en [CHANGELOG.md](CHANGELOG.md).

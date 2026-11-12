@@ -1,0 +1,61 @@
+Parte 8. Solicitud de cambio y análisis de impacto
+
+Antes del cambio
+python -m pytest -p no:cacheprovider --color=no -q --tb=short tests/test_zona_insular.py
+
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+____________________ test_tarifa_insular_sin_cupon[SC-01] _____________________
+tests\test_zona_insular.py:16: in test_tarifa_insular_sin_cupon
+    assert calc(peso, "insular", cliente, dia) == total
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+envios.py:103: in calc
+    estrategia = _seleccionar_zona(z)
+                 ^^^^^^^^^^^^^^^^^^^^
+envios.py:65: in _seleccionar_zona
+    raise ValueError("zona inválida")
+E   ValueError: zona inválida
+____________________ test_tarifa_insular_sin_cupon[SC-02] _____________________
+tests\test_zona_insular.py:16: in test_tarifa_insular_sin_cupon
+    assert calc(peso, "insular", cliente, dia) == total
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+envios.py:103: in calc
+    estrategia = _seleccionar_zona(z)
+                 ^^^^^^^^^^^^^^^^^^^^
+envios.py:65: in _seleccionar_zona
+    raise ValueError("zona inválida")
+E   ValueError: zona inválida
+______________ test_zona_insular_rechaza_cualquier_cupon[SC-03] _______________
+tests\test_zona_insular.py:24: in test_zona_insular_rechaza_cualquier_cupon
+    with pytest.raises(ValueError, match="^la zona insular no acepta cupones$"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError:
+E   - zona inválida
+E   + la zona insular no acepta cupones
+______________ test_zona_insular_rechaza_cualquier_cupon[SC-04] _______________
+tests\test_zona_insular.py:24: in test_zona_insular_rechaza_cualquier_cupon
+    with pytest.raises(ValueError, match="^la zona insular no acepta cupones$"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError:
+E   - zona inválida
+E   + la zona insular no acepta cupones
+=========================== short test summary info ===========================
+FAILED tests/test_zona_insular.py::test_tarifa_insular_sin_cupon[SC-01] - Val...
+FAILED tests/test_zona_insular.py::test_tarifa_insular_sin_cupon[SC-02] - Val...
+FAILED tests/test_zona_insular.py::test_zona_insular_rechaza_cualquier_cupon[SC-03]
+FAILED tests/test_zona_insular.py::test_zona_insular_rechaza_cualquier_cupon[SC-04]
+4 failed in 0.07s
+
+Después del cambio
+python -m pytest -p no:cacheprovider --color=no -q --cov=envios --cov-branch --cov-report=term-missing
+
+.............................................                            [100%]
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.14.7-final-0 _______________
+
+Name        Stmts   Miss Branch BrPart  Cover   Missing
+-------------------------------------------------------
+envios.py      72      0     16      0   100%
+-------------------------------------------------------
+TOTAL          72      0     16      0   100%
+45 passed in 0.13s

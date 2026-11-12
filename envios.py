@@ -12,6 +12,8 @@ TARIFA_TRAMO_2 = Decimal("9000")
 COSTO_KG_EXCEDENTE = Decimal("800")
 RECARGO_RURAL = Decimal("0.25")
 RECARGO_NACIONAL = Decimal("0.50")
+RECARGO_INSULAR = Decimal("0.70")
+ZONA_INSULAR = "insular"
 RECARGO_FIN_DE_SEMANA = Decimal("2000")
 DESCUENTO_FRECUENTE = Decimal("0.05")
 DESCUENTO_VIP = Decimal("0.15")
@@ -45,6 +47,7 @@ ESTRATEGIAS_ZONA: dict[str, EstrategiaZona] = {
     "urbana": SinRecargo(),
     "rural": RecargoPorcentual(RECARGO_RURAL),
     "nacional": RecargoPorcentual(RECARGO_NACIONAL),
+    ZONA_INSULAR: RecargoPorcentual(RECARGO_INSULAR),
 }
 DESCUENTOS_CLIENTE = {
     "frecuente": DESCUENTO_FRECUENTE,
@@ -102,6 +105,8 @@ def calc(p, z, c, d, cup=None):
     peso = _validar_peso(p)
     estrategia = _seleccionar_zona(z)
     _validar_dia(d)
+    if z == ZONA_INSULAR and cup is not None:
+        raise ValueError("la zona insular no acepta cupones")
     tarifa = estrategia.aplicar(_tarifa_base(peso))
     tarifa = _aplicar_descuentos(tarifa, c, cup)
     return _total(_aplicar_recargo_fin_de_semana(tarifa, d))
