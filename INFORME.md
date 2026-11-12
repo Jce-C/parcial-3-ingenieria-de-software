@@ -192,3 +192,70 @@ Cada fila muestra las entradas en orden de peso, zona, cliente, día y cupón. E
 **CN-10.** Base de \$9.000 y recargo rural de 25 %: \$11.250. Cliente frecuente: \$11.250 × 0,95 = \$10.687,50. El cupón OTRO se ignora. Domingo: \$10.687,50 + \$2.000 = \$12.687,50. Total redondeado: \$12.700.
 
 **CN-11.** Base urbana de \$6.000. VIP: \$6.000 × 0,85 = \$5.100. ENVIO10: \$5.100 × 0,90 = \$4.590. Al aplicar el mínimo se obtienen \$5.000, que ya es múltiplo de \$100.
+
+## Parte 4. Diseño de casos de caja blanca
+
+### 4.1 Grafo de flujo
+
+El grafo muestra el flujo de `calc` en la etiqueta `v1.0.0`. Los rombos representan condiciones y los rectángulos indican instrucciones. El error de peso y el retorno normal llevan a la salida común 30.
+
+![Grafo de flujo de calc en la versión heredada](evidencias/flujo-calc-heredado.png)
+
+*Figura 1. Grafo de flujo de calc en la versión heredada.*
+
+### 4.2 Complejidad ciclomática
+
+Se cuentan 30 nodos y 43 aristas. La salida común 30 reúne tanto la excepción del peso como el retorno normal. El grafo contiene 14 predicados con dos salidas cada uno.
+
+| Método | Cálculo | Resultado |
+| --- | --- | --- |
+| Aristas y nodos | V(G) = E − N + 2 = 43 − 30 + 2. El grafo tiene una entrada y una salida común. | 15 |
+| Nodos predicado | V(G) = P + 1 = 14 + 1. La condición compuesta del peso se divide por cortocircuito en los nodos 02 y 03. | 15 |
+| Regiones | 14 interiores y 1 exterior. Interiores por bloque: validación (2), tarifa (2), zona (3), fin de semana (1), cliente (2), cupón (2), mínimo (1) y flag (1). | 15 |
+
+### 4.3 Caminos independientes y casos de prueba
+
+La tabla contiene 15 recorridos independientes, verificados con sus vectores de aristas. Las referencias entre paréntesis reutilizan casos de caja negra. En cada recorrido se usa `flag=False`, salvo cuando la entrada indica `flag=True`. El resultado esperado se toma de la especificación y el observado se obtuvo ejecutando `v1.0.0`.
+
+| Camino y referencia | Entradas y foco | Secuencia de nodos | Esperado | Observado en v1.0.0 |
+| --- | --- | --- | --- | --- |
+| CB-01 (CN-14) | Base urbana. 2,99 kg · urbana · normal · día 4 · sin cupón. | 01 → 02 → 03 → 05 → 06 → 10 → 11 → 16 → 18 → 20 → 22 → 25 → 27 → 29 → 30 | \$6.000 | \$6.000 |
+| CB-02 (CN-02) | Peso igual a cero. 0 kg · urbana · normal · día 3 · sin cupón. | 01 → 02 → 04 → 30 | Error «peso inválido» | ValueError «peso invalido» |
+| CB-03 (CN-03) | Peso superior al máximo. 50,01 kg · urbana · normal · día 3 · sin cupón. | 01 → 02 → 03 → 04 → 30 | Error «peso inválido» | ValueError «peso invalido» |
+| CB-04 (CN-15) | Segundo tramo. 3,01 kg · urbana · normal · día 4 · sin cupón. | 01 → 02 → 03 → 05 → 07 → 08 → 10 → 11 → 16 → 18 → 20 → 22 → 25 → 27 → 29 → 30 | \$9.000 | \$9.000 |
+| CB-05 (CN-17) | Tarifa proporcional. 10,01 kg · urbana · normal · día 4 · sin cupón. | 01 → 02 → 03 → 05 → 07 → 09 → 10 → 11 → 16 → 18 → 20 → 22 → 25 → 27 → 29 → 30 | \$9.000 | \$9.000 |
+| CB-06 | Recargo rural. 2,99 kg · rural · normal · día 4 · sin cupón. | 01 → 02 → 03 → 05 → 06 → 10 → 12 → 13 → 16 → 18 → 20 → 22 → 25 → 27 → 29 → 30 | \$7.500 | \$7.500 |
+| CB-07 | Recargo nacional. 2,99 kg · nacional · normal · día 4 · sin cupón. | 01 → 02 → 03 → 05 → 06 → 10 → 12 → 14 → 15 → 16 → 18 → 20 → 22 → 25 → 27 → 29 → 30 | \$9.000 | \$9.000 |
+| CB-08 (CN-04) | Zona fuera del catálogo. 2 kg · costera · normal · día 3 · sin cupón. | 01 → 02 → 03 → 05 → 06 → 10 → 12 → 14 → 16 → 18 → 20 → 22 → 25 → 27 → 29 → 30 | Error de zona | \$6.000 |
+| CB-09 | Rama del domingo. 2,99 kg · urbana · normal · día 7 · sin cupón. | 01 → 02 → 03 → 05 → 06 → 10 → 11 → 16 → 17 → 18 → 20 → 22 → 25 → 27 → 29 → 30 | \$8.000 | \$8.000 |
+| CB-10 | Descuento frecuente. 2,99 kg · urbana · frecuente · día 4 · sin cupón. | 01 → 02 → 03 → 05 → 06 → 10 → 11 → 16 → 18 → 19 → 20 → 22 → 25 → 27 → 29 → 30 | \$5.700 | \$5.700 |
+| CB-11 | Descuento VIP. 2,99 kg · urbana · vip · día 4 · sin cupón. | 01 → 02 → 03 → 05 → 06 → 10 → 11 → 16 → 18 → 20 → 21 → 22 → 25 → 27 → 29 → 30 | \$5.100 | \$5.100 |
+| CB-12 | Cupón desconocido. 2,99 kg · urbana · normal · día 4 · OTRO. | 01 → 02 → 03 → 05 → 06 → 10 → 11 → 16 → 18 → 20 → 22 → 23 → 25 → 27 → 29 → 30 | \$6.000 | \$6.000 |
+| CB-13 (CN-25) | Cupón válido. 4 kg · urbana · normal · día 4 · ENVIO10. | 01 → 02 → 03 → 05 → 07 → 08 → 10 → 11 → 16 → 18 → 20 → 22 → 23 → 24 → 25 → 27 → 29 → 30 | \$8.100 | \$8.100 |
+| CB-14 (CN-11) | Activación del mínimo. 2 kg · urbana · vip · día 3 · ENVIO10. | 01 → 02 → 03 → 05 → 06 → 10 → 11 → 16 → 18 → 20 → 21 → 22 → 23 → 24 → 25 → 26 → 27 → 29 → 30 | \$5.000 | \$5.000 |
+| CB-15 | Impresión de diagnóstico. 2,99 kg · urbana · normal · día 4 · sin cupón · flag=True. | 01 → 02 → 03 → 05 → 06 → 10 → 11 → 16 → 18 → 20 → 22 → 25 → 27 → 28 → 29 → 30 | \$6.000 y una impresión de diagnóstico | \$6.000 e imprime «costo: 6000» |
+
+En CB-08, la zona desconocida recorre las tres salidas No del bloque de zona. La versión heredada devuelve \$6.000 aunque R2 exige un error. En CB-12, ignorar el cupón desconocido sí cumple R7. CB-15 documenta la impresión del argumento `flag` en la versión heredada.
+
+### 4.4 Cobertura de sentencias y ramas
+
+**Sentencias.** CB-02, CB-04, CB-05, CB-06, CB-07, CB-09, CB-10, CB-14, CB-15 recorren conjuntamente todos los nodos ejecutables de `calc` en el grafo. Este conjunto incluye las dos formas de salir de la función: la instrucción que lanza el error de peso y el retorno normal. También alcanza la impresión de diagnóstico.
+
+**Ramas.** La suite completa CB-01 a CB-15 recorre las 43 aristas del grafo. La tabla identifica un caso que toma cada salida Sí y No de los 14 predicados. Esta es la cobertura prevista por el diseño. En la Parte 5 se registrará la medición de la herramienta.
+
+| Nodo predicado | Salida Sí | Salida No |
+| --- | --- | --- |
+| 02 · p ≤ 0 | CB-02 | CB-01 |
+| 03 · p > 50 | CB-03 | CB-01 |
+| 05 · p ≤ L1 | CB-01 | CB-04 |
+| 07 · p ≤ L2 | CB-04 | CB-05 |
+| 10 · Zona urbana | CB-01 | CB-06 |
+| 12 · Zona rural | CB-06 | CB-07 |
+| 14 · Zona nacional | CB-07 | CB-08 |
+| 16 · d > 6 | CB-09 | CB-01 |
+| 18 · Cliente frecuente | CB-10 | CB-01 |
+| 20 · Cliente VIP | CB-11 | CB-01 |
+| 22 · Hay cupón | CB-12 | CB-01 |
+| 23 · Cupón = ENVIO10 | CB-13 | CB-12 |
+| 25 · t < 5.000 | CB-14 | CB-01 |
+| 27 · flag es verdadero | CB-15 | CB-01 |
