@@ -374,9 +374,11 @@ calc selecciona una EstrategiaZona mediante el catálogo de destinos. SinRecargo
 
 La suite corregida aprobó 41 de 41 casos. Se conservaron las entradas, los IDs y los resultados esperados de negocio. CB-15 conserva el importe esperado y comprueba la ausencia del argumento flag y de la impresión. La evidencia del diagnóstico original permanece en la Parte 5.
 
-```text
-41 passed in 0.31s
-```
+La Figura 5 corresponde a la repetición en PowerShell con Python 3.14.7 y Coverage.py 7.17.2. En esa ejecución se midieron 68 sentencias, porque la anotación tasa: Decimal de la línea 38 no se contó como ejecutable. La tabla usa la medición de referencia con Python 3.12.14 (69 sentencias). Ambas ejecuciones aprobaron los 41 casos y cubrieron las 14 ramas.
+
+![Captura de la regresión del código corregido](evidencias/regresion-41-pruebas.png)
+
+*Figura 5. Regresión en PowerShell sobre la versión corregida: 41 pruebas aprobadas y cobertura del 100 %.*
 
 | Métrica | Código heredado | Código corregido |
 | --- | --- | --- |
