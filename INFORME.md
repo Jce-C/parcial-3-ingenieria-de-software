@@ -391,3 +391,61 @@ La Figura 5 corresponde a la repetición en PowerShell con Python 3.14.7 y Cover
 | Cobertura de ramas | 100 % · 26/26 | 100 % · 14/14 |
 
 calc coordina las etapas. Al desglosar el cortocircuito, _validar_peso tiene complejidad 4 y _tarifa_base tiene 3. El archivo crece al introducir constantes, funciones y clases. En la versión corregida, Coverage.py excluye cuatro líneas de la declaración del protocolo.
+
+## Parte 7. Control de versiones y publicación
+
+### Integración de los cambios
+
+La etiqueta v1.0.0 identifica el código heredado en ca3081b. La suite de pruebas se incorporó desde test/suite, los seis defectos se corrigieron por separado en fix/DEF-01 a fix/DEF-06 y el diseño por estrategias de zona se integró desde refactor/estrategia. El historial de main conserva los merges de estas ocho ramas.
+
+### Versión y compatibilidad
+
+Se propone v2.0.0 según el versionado semántico. La firma pública cambia de `calc(p, z, c, d, cup=None, flag=False)` a `calc(p, z, c, d, cup=None)`. Un sexto argumento posicional o el argumento por nombre flag produce TypeError. Para migrar, se elimina ese argumento de las llamadas y se usa el valor devuelto para mostrar el costo cuando corresponda. La regresión de la Parte 6 registró 41 de 41 pruebas aprobadas y 100 % de cobertura de ramas de envios.py.
+
+[CHANGELOG.md](CHANGELOG.md) registra los cambios por versión. [NOTAS_VERSION.md](NOTAS_VERSION.md) contiene el resumen para la publicación y las instrucciones de migración. La etiqueta y el lanzamiento de GitHub están pendientes de publicación.
+
+### Historial de Git
+
+Salida de `git log --oneline --graph --all` hasta b04830b, con la Parte 6 integrada.
+
+```text
+* b04830b Adjunta la evidencia de regresión de la versión corregida
+*   5c6d6d8 Integra la refactorización y la regresión
+|\
+| * 5a82491 Separa las estrategias de recargo y verifica la regresión
+|/
+*   3d441cc Integra la corrección DEF-06
+|\
+| * 1c22823 DEF-06 Redondea al centenar con aritmética decimal
+|/
+*   6953068 Integra la corrección DEF-05
+|\
+| * 13e80c1 DEF-05 Suma el recargo después de los descuentos
+|/
+*   e091547 Integra la corrección DEF-04
+|\
+| * f2ba9c6 DEF-04 Aplica el recargo también el sábado
+|/
+*   fe116b4 Integra la corrección DEF-03
+|\
+| * 78d2b83 DEF-03 Valida el rango del día de envío
+|/
+*   ecc0873 Integra la corrección DEF-02
+|\
+| * 158b7b4 DEF-02 Rechaza zonas fuera del catálogo
+|/
+*   c8f3555 Integra la corrección DEF-01
+|\
+| * c7a4fb4 DEF-01 Corrige el mensaje de peso inválido
+|/
+*   fd4059c Integra las pruebas de la versión heredada
+|\
+| * 0fe893f Automatiza la suite y registra los defectos de la versión heredada
+|/
+* 98a54ff Documenta los caminos y la cobertura de caja blanca
+* 0986915 Documenta el diseño de pruebas de caja negra
+* d012004 Documenta el plan de pruebas del cotizador
+* 3a09b41 Completa la Parte 1 con requisitos, historias y trazabilidad
+* 00d65d9 Documenta los parámetros del parcial
+* ca3081b Registra y guarda la versión del código heredada con la configuración personal de los párametros
+```
